@@ -1,48 +1,61 @@
 package au.lupine.hopplet.listener;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import au.lupine.hopplet.filter.Filter;
 import org.bukkit.block.Hopper;
 import org.bukkit.entity.minecart.HopperMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.HopperInventorySearchEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
-public final class HopperListener implements Listener {
+public final class HopperInventoryListener implements Listener {
 
     @EventHandler
-    public void on(@NotNull InventoryMoveItemEvent event) {
+    public void on(@NonNull InventoryMoveItemEvent event) {
         Inventory destination = event.getDestination();
-        if (!destination.getType().equals(InventoryType.HOPPER)) return;
+        if (destination.getType() != InventoryType.HOPPER)return;
 
         InventoryHolder holder = destination.getHolder(false);
         if (holder == null) return;
 
-        String name = hopperName(holder);
-        if (name == null) return;
+        Filter filter = switch (holder) {
+            case Hopper hopper -> Filter.of(hopper);
+            case HopperMinecart hopper -> Filter.of(hopper);
+            default -> Filter.TRUE;
+        };
 
-        ItemStack item = event.getItem();
+        Filter.Context context = Filter.Context.builder()
+            .stack(event.getItem())
+            .source(event.getSource())
+            .destination(destination)
+            .build();
+
+        if (!filter.test(context)) event.setCancelled(true);
     }
 
     @EventHandler
-    public void on(@NotNull HopperInventorySearchEvent event) {
+    public void on(@NonNull InventoryPickupItemEvent event) {
+        Inventory inventory = event.getInventory();
+        if (!inventory.getType().equals(InventoryType.HOPPER)) return;
 
-    }
+        InventoryHolder holder = inventory.getHolder(false);
+        if (holder == null) return;
 
-    private @Nullable String hopperName(@NotNull InventoryHolder holder) {
-        if (holder instanceof Hopper hopper) return serialise(hopper.customName());
-        if (holder instanceof HopperMinecart hopper) return serialise(hopper.customName());
-        return null;
-    }
+        Filter filter = switch (holder) {
+            case Hopper hopper -> Filter.of(hopper);
+            case HopperMinecart hopper -> Filter.of(hopper);
+            default -> Filter.TRUE;
+        };
 
-    private @Nullable String serialise(@Nullable Component component) {
-        return component == null ? null : PlainTextComponentSerializer.plainText().serialize(component);
+        Filter.Context context = Filter.Context.builder()
+            .item(event.getItem())
+            .destination(inventory)
+            .build();
+
+        if (!filter.test(context)) event.setCancelled(true);
     }
 }

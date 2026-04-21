@@ -1,10 +1,12 @@
 name: Hopplet
 description: $description
-version: '$version'
+version: "$version"
 
 main: au.lupine.hopplet.Hopplet
-api-version: '1.21.11'
+api-version: "1.21.8"
 load: POSTWORLD
 
-authors: [ jwkerr ]
+authors: [jwkerr]
 website: https://lupine.au
+
+folia-supported: true

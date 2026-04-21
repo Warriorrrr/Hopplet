@@ -1,57 +1,77 @@
 package au.lupine.hopplet.filter;
 
+import au.lupine.hopplet.filter.exception.FilterCompileException;
 import net.kyori.adventure.text.Component;
-import org.bukkit.entity.Item;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
-public interface FilterMethod {
+public interface Function<ArgumentType> {
 
-    @NotNull Set<FilterMethod> METHODS = new HashSet<>();
+    @NonNull Set<Function<?>> FUNCTIONS = new CopyOnWriteArraySet<>();
 
-    @NotNull Plugin plugin();
+    /// @return The name of this function in `snake_case`.
+    @NonNull String name();
 
-    @NotNull String name();
-
-    default @NotNull Set<String> aliases() {
+    default @NonNull Set<String> aliases() {
         return Set.of();
     }
 
-    default @NotNull Component description() {
-        return Component.translatable("hopplet.message.this_filter_method_has_not_set_a_description");
+    default @NonNull Component description() {
+        return Component.translatable("hopplet.filter.function.default.description");
     }
 
-    boolean accepts(@NotNull ItemStack item, @Nullable String argument);
+    /// Functions will be {@link #namespaced()} as `plugin:function_name`.
+    /// This namespace can be used if another function has claimed your {@link #name()}.
+    /// @return The plugin that owns this function.
+    @NonNull Plugin plugin();
 
-    default boolean accepts(@NotNull Item item, @Nullable String argument) {
-        return accepts(item.getItemStack(), argument);
+    @NonNull ArgumentType compile(@NonNull List<String> arguments) throws FilterCompileException;
+
+    boolean test(Filter.@NonNull Context context, @NonNull ArgumentType compiled);
+
+    /// @return The namespaced name of this function. i.e. `plugin:function_name`.
+    default @NonNull String namespaced() {
+        return plugin().namespace() + ":" + name();
     }
 
-    default @NotNull String namespaced() {
-        String namespace = plugin().getName();
-        return namespace + ":" + name();
-    }
-
-    static boolean register(@NotNull FilterMethod method) {
-        for (FilterMethod other : METHODS) {
-            if (other.namespaced().equals(method.namespaced())) return false;
+    static void register(@NonNull Function<?>... functions) {
+        for (Function<?> function : functions) {
+            for (Function<?> other : FUNCTIONS) {
+                if(other.namespaced().equals(function.namespaced())) return;
+            }
+            FUNCTIONS.add(function);
         }
-        return METHODS.add(method);
     }
 
-    static boolean unregister(@NotNull FilterMethod method) {
-        return METHODS.remove(method);
+    static void unregister(@NonNull Function<?>... functions) {
+        for (Function<?> function : functions) {
+            FUNCTIONS.remove(function);
+        }
     }
 
-    static <MethodType extends FilterMethod> @Nullable FilterMethod ofType(@NotNull Class<MethodType> type) {
-        for (FilterMethod method : METHODS) {
-            if (type.isInstance(method)) return type.cast(method);
+    static <FunctionType extends Function<?>> @Nullable Function<?> ofType(@NonNull Class<FunctionType> type) {
+        for (Function<?> function : FUNCTIONS) {
+            if (type.isInstance(function)) return type.cast(function);
         }
         return null;
+    }
+
+    static @Nullable Function<?> ofName(@NonNull String name) {
+        for (Function<?> function : FUNCTIONS) {
+            if (function.name().equals(name)) return function;
+        }
+        return null;
+    }
+
+    static @Nullable Function<?> ofNamespacedOrName(@NonNull String name) {
+        for (Function<?> function : FUNCTIONS) {
+            if (function.namespaced().equals(name)) return function;
+        }
+        return ofName(name);
     }
 }
