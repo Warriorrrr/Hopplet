@@ -2,6 +2,7 @@ package au.lupine.hopplet;
 
 import au.lupine.hopplet.filter.Function;
 import au.lupine.hopplet.filter.function.*;
+import au.lupine.hopplet.listener.FilterCacheListener;
 import au.lupine.hopplet.listener.FilterEditListener;
 import au.lupine.hopplet.listener.HopperInventoryListener;
 import net.kyori.adventure.key.Key;
@@ -28,6 +29,7 @@ public final class Hopplet extends JavaPlugin {
         loadTranslations();
 
         registerListeners(
+            new FilterCacheListener(),
             new FilterEditListener(),
             new HopperInventoryListener()
         );

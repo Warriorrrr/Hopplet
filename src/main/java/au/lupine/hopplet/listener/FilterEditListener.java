@@ -2,6 +2,7 @@ package au.lupine.hopplet.listener;
 
 import au.lupine.hopplet.Hopplet;
 import au.lupine.hopplet.filter.Filter;
+import au.lupine.hopplet.filter.exception.FilterCompileException;
 import io.papermc.paper.dialog.Dialog;
 import io.papermc.paper.registry.data.dialog.ActionButton;
 import io.papermc.paper.registry.data.dialog.DialogBase;
@@ -30,7 +31,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -62,32 +65,35 @@ public final class FilterEditListener implements Listener {
 
         Location location = block.getLocation();
 
-        player.showDialog(dialog(
-            player,
-            name,
-            Material.HOPPER,
-            input -> {
-                Hopplet instance = Hopplet.instance();
-                instance.getServer().getRegionScheduler().run(instance, location, task -> {
-                    Block target = location.getBlock();
-                    if (!(target.getState() instanceof Hopper hopper)) return;
+        Consumer<String> confirm = input -> {
+            Hopplet instance = Hopplet.instance();
 
-                    if (input.isBlank()) {
-                        hopper.customName(null);
-                    } else {
-                        hopper.customName(Component.text(input));
-                    }
+            instance.getServer().getRegionScheduler().run(instance, location, task -> {
+                Block target = location.getBlock();
+                if (!(target.getState(false) instanceof Hopper hopper)) return;
 
-                    hopper.setTransferCooldown(20);
+                String cleaned = Filter.Compiler.clean(input);
 
-                    hopper.update();
+                Filter.Cache.invalidate(hopper);
+                try {
+                    Filter filter = Filter.Compiler.compile(cleaned);
+                    if (filter != null) Filter.Cache.cache(hopper, filter);
+                } catch (FilterCompileException e) {
+                    player.sendMessage(e);
+                }
 
-                    Random random = new Random();
-                    location.getWorld().playSound(location, Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 0.75F, random.nextFloat(1.25F, 1.5F));
-                });
-            },
-            () -> playSound(location, Sound.BLOCK_ANVIL_LAND, 0.3F, 1.25F, 1.5F))
-        );
+                hopper.customName(cleaned.isEmpty() ? null : Component.text(cleaned));
+
+                hopper.setTransferCooldown(20);
+                hopper.update();
+
+                playSound(location, Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 0.75F, 1.25F, 1.5F);
+            });
+        };
+
+        Runnable cancel = () -> playSound(location, Sound.BLOCK_ANVIL_LAND, 0.3F, 1.25F, 1.5F);
+
+        player.showDialog(dialog(player, name, Material.HOPPER, confirm, cancel));
     }
 
     @EventHandler
@@ -107,34 +113,43 @@ public final class FilterEditListener implements Listener {
         Component existing = hopper.customName();
         String name = existing == null ? "" : PlainTextComponentSerializer.plainText().serialize(existing);
 
-        player.showDialog(dialog(
-            player,
-            name,
-            Material.HOPPER_MINECART,
-            input -> {
-                Location location = hopper.getLocation();
+        Consumer<String> confirm = input -> {
+            Location location = hopper.getLocation();
 
-                Hopplet instance = Hopplet.instance();
-                instance.getServer().getRegionScheduler().run(instance, location, task -> {
-                    if (input.isBlank()) {
-                        hopper.customName(null);
-                        return;
-                    }
+            Hopplet instance = Hopplet.instance();
 
-                    hopper.customName(Component.text(input));
-                });
+            instance.getServer().getRegionScheduler().run(instance, location, task -> {
+                if (!hopper.isValid()) return;
 
+                String cleaned = Filter.Compiler.clean(input);
+
+                Filter.Cache.invalidate(hopper);
+                try {
+                    Filter filter = Filter.Compiler.compile(cleaned);
+                    if (filter != null) Filter.Cache.cache(hopper, filter);
+                } catch (FilterCompileException e) {
+                    player.sendMessage(e);
+                }
+
+                hopper.customName(cleaned.isEmpty() ? null : Component.text(cleaned));
                 playSound(location, Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 0.75F, 1.25F, 1.5F);
-            },
-            () -> {
-                Location location = hopper.getLocation();
-                playSound(location, Sound.BLOCK_ANVIL_LAND, 0.3F, 1.25F, 1.5F);
-            })
-        );
+            });
+        };
+
+        Runnable cancel = () -> {
+            Location location = hopper.getLocation();
+            playSound(location, Sound.BLOCK_ANVIL_LAND, 0.3F, 1.25F, 1.5F);
+        };
+
+        player.showDialog(dialog(player, name, Material.HOPPER_MINECART, confirm, cancel));
+    }
+
+    private @NonNull Dialog dialog(@NonNull Player player, @NonNull String text, @NonNull Material icon, @NonNull Consumer<String> confirm, @NonNull Runnable cancel) {
+        return dialog(player, text, icon, null, confirm, cancel);
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    private @NonNull Dialog dialog(@NonNull Player player, @NonNull String text, @NonNull Material icon, @NonNull Consumer<String> confirm, @NonNull Runnable cancel) {
+    private @NonNull Dialog dialog(@NonNull Player player, @NonNull String text, @NonNull Material icon, @Nullable Component message, @NonNull Consumer<String> confirm, @NonNull Runnable cancel) {
         ItemStack item = new ItemStack(icon);
         if (!text.isBlank()) {
             ItemMeta meta = item.getItemMeta();
@@ -142,15 +157,17 @@ public final class FilterEditListener implements Listener {
             item.setItemMeta(meta);
         }
 
+        List<DialogBody> bodies = new ArrayList<>();
+        bodies.add(DialogBody.item(item).build());
+        bodies.add(DialogBody.plainMessage(translate(player, "hopplet.dialog.edit_filter.body.need_help")));
+        bodies.add(DialogBody.plainMessage(translate(player, "hopplet.dialog.edit_filter.body.documentation")));
+        bodies.add(DialogBody.plainMessage(translate(player, "hopplet.dialog.edit_filter.body.discord")));
+
+        if (message != null) bodies.add(DialogBody.plainMessage(message));
+
         return Dialog.create(builder -> builder.empty()
             .base(DialogBase.builder(translate(player, "hopplet.dialog.edit_filter.title"))
-                .body(List.of(
-                    DialogBody.item(new ItemStack(item))
-                        .build(),
-                    DialogBody.plainMessage(translate(player, "hopplet.dialog.edit_filter.body.need_help")),
-                    DialogBody.plainMessage(translate(player, "hopplet.dialog.edit_filter.body.documentation")),
-                    DialogBody.plainMessage(translate(player, "hopplet.dialog.edit_filter.body.discord"))
-                ))
+                .body(bodies)
                 .inputs(List.of(
                     DialogInput.text("filter_input", translate(player, "hopplet.dialog.edit_filter.input.filter_input"))
                         .initial(text)
@@ -161,29 +178,49 @@ public final class FilterEditListener implements Listener {
                 ))
                 .build()
             )
-            .type(DialogType.confirmation(
-                ActionButton.builder(translate(player, "hopplet.dialog.edit_filter.confirmation.confirm"))
-                    .action(DialogAction.customClick((view, audience) -> {
-                            String input = view.getText("filter_input");
-                            if (input == null) return;
+            .type(DialogType.multiAction(
+                    List.of(
+                        ActionButton.builder(translate(player, "hopplet.dialog.edit_filter.action.validate"))
+                            .action(DialogAction.customClick((view, audience) -> {
+                                    String input = view.getText("filter_input");
+                                    if (input == null) return;
 
-                            input = Filter.clean(input);
+                                    Component result;
+                                    try {
+                                        Filter.Compiler.compile(input);
+                                        result = translate(player, "hopplet.dialog.edit_filter.action.validate.success");
+                                    } catch (FilterCompileException e) {
+                                        result = e.asComponent();
+                                    }
 
-                            if (input.equals(text)) return;
+                                    player.showDialog(dialog(player, input, icon, result, confirm, cancel));
+                                }, ClickCallback.Options.builder()
+                                    .uses(ClickCallback.UNLIMITED_USES)
+                                    .build()
+                            ))
+                            .build(),
+                        ActionButton.builder(translate(player, "hopplet.dialog.edit_filter.action.confirm"))
+                            .action(DialogAction.customClick((view, audience) -> {
+                                    String input = view.getText("filter_input");
+                                    if (input == null) return;
 
-                            confirm.accept(input);
-                        }, ClickCallback.Options.builder()
-                            .uses(1)
+                                    if (input.equals(text)) return;
+
+                                    confirm.accept(input);
+                                }, ClickCallback.Options.builder()
+                                    .uses(1)
+                                    .build()
+                            ))
+                            .build(),
+                        ActionButton.builder(translate(player, "hopplet.dialog.edit_filter.action.cancel"))
+                            .action(DialogAction.customClick((view, audience) -> cancel.run(), ClickCallback.Options.builder()
+                                .uses(1)
+                                .build()
+                            ))
                             .build()
                     ))
-                    .build(),
-                ActionButton.builder(translate(player, "hopplet.dialog.edit_filter.confirmation.cancel"))
-                    .action(DialogAction.customClick((view, audience) -> cancel.run(), ClickCallback.Options.builder()
-                        .uses(1)
-                        .build()
-                    ))
-                    .build()
-            ))
+                .build()
+            )
         );
     }
 
