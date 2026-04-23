@@ -140,7 +140,7 @@ public final class Filter {
                 if (token.type != type) throw new FilterCompileException(
                     Component.translatable(
                         "hopplet.filter.compilation.exception.expected_token",
-                        Argument.string("expected", type.display()), // TODO: improve token formatting
+                        Argument.string("expected", type.display()),
                         Argument.string("got", token.type.display()),
                         Argument.numeric("position", token.position + 1)
                     )
