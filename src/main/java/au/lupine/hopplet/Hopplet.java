@@ -35,8 +35,15 @@ public final class Hopplet extends JavaPlugin {
         );
 
         Function.register(
+            new DisplayNameContainsFunction(),
+            new DisplayNameEndsWithFunction(),
+            new DisplayNameFunction(),
+            new DisplayNameStartsWithFunction(),
             new EnchantmentFunction(),
+            new MaterialContainsFunction(),
+            new MaterialEndsWithFunction(),
             new MaterialFunction(),
+            new MaterialStartsWithFunction(),
             new PotionDurationFunction(),
             new PotionEffectFunction(),
             new TagFunction(),
