@@ -6,12 +6,9 @@ import au.lupine.hopplet.listener.FilterCacheListener;
 import au.lupine.hopplet.listener.FilterEditListener;
 import au.lupine.hopplet.listener.HopperInventoryListener;
 import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.translation.Argument;
 import net.kyori.adventure.text.minimessage.translation.MiniMessageTranslationStore;
 import net.kyori.adventure.translation.GlobalTranslator;
 import net.kyori.adventure.util.UTF8ResourceBundleControl;
-import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -40,6 +37,7 @@ public final class Hopplet extends JavaPlugin {
         Function.register(
             new EnchantmentFunction(),
             new MaterialFunction(),
+            new PotionDurationFunction(),
             new PotionEffectFunction(),
             new TagFunction(),
             new ThrowerFunction()
