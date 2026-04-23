@@ -74,7 +74,7 @@ public final class PotionEffectFunction implements Function<Set<PotionEffectFunc
                     throw new FilterCompileException(
                         Component.translatable(
                             "hopplet.filter.function.potion_effect.compilation.exception.amplifier_must_be_positive",
-                            Argument.string("argument", argument)
+                            Argument.string("input", argument)
                         )
                     );
                 }
@@ -122,7 +122,7 @@ public final class PotionEffectFunction implements Function<Set<PotionEffectFunc
             throw new FilterCompileException(
                 Component.translatable(
                     "hopplet.filter.function.potion_effect.compilation.exception.no_potion_effect_specified",
-                    Argument.string("argument", argument)
+                    Argument.string("input", argument)
                 )
             );
         }
@@ -135,7 +135,7 @@ public final class PotionEffectFunction implements Function<Set<PotionEffectFunc
             throw new FilterCompileException(
                 Component.translatable(
                     "hopplet.filter.function.potion_effect.compilation.exception.unknown_potion_effect",
-                    Argument.string("argument", argument)
+                    Argument.string("input", argument)
                 )
             );
         }
@@ -148,7 +148,7 @@ public final class PotionEffectFunction implements Function<Set<PotionEffectFunc
             throw new FilterCompileException(
                 Component.translatable(
                     "hopplet.filter.function.potion_effect.compilation.exception.no_amplifier_specified",
-                    Argument.string("argument", argument)
+                    Argument.string("input", argument)
                 )
             );
         }
@@ -159,7 +159,7 @@ public final class PotionEffectFunction implements Function<Set<PotionEffectFunc
             throw new FilterCompileException(
                 Component.translatable(
                     "hopplet.filter.function.potion_effect.compilation.exception.invalid_amplifier",
-                    Argument.string("argument", argument)
+                    Argument.string("input", argument)
                 )
             );
         }

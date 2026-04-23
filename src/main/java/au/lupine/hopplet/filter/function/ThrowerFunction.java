@@ -55,8 +55,8 @@ public final class ThrowerFunction implements Function<Set<UUID>> {
             } catch (IllegalArgumentException e) {
                 throw new FilterCompileException(
                     Component.translatable(
-                        "hopplet.filter.function.thrower.exception.invalid_uuid",
-                        Argument.string("argument", argument)
+                        "hopplet.filter.function.thrower.compilation.exception.invalid_uuid",
+                        Argument.string("input", argument)
                     )
                 );
             }

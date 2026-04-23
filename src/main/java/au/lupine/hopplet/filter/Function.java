@@ -6,6 +6,7 @@ import org.bukkit.plugin.Plugin;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -34,9 +35,21 @@ public interface Function<ArgumentType> {
 
     boolean test(Filter.@NonNull Context context, @NonNull ArgumentType compiled);
 
+    default @NonNull String namespaced(@NonNull String name) {
+        return plugin().namespace() + ":" + name;
+    }
+
     /// @return The namespaced name of this function. i.e. `plugin:function_name`.
     default @NonNull String namespaced() {
-        return plugin().namespace() + ":" + name();
+        return namespaced(name());
+    }
+
+    default @NonNull Set<String> namespacedAliases() {
+        Set<String> aliases = new HashSet<>();
+        for (String alias : aliases()) {
+            aliases.add(namespaced(alias));
+        }
+        return aliases;
     }
 
     static void register(@NonNull Function<?>... functions) {
@@ -64,6 +77,10 @@ public interface Function<ArgumentType> {
     static @Nullable Function<?> ofName(@NonNull String name) {
         for (Function<?> function : FUNCTIONS) {
             if (function.name().equals(name)) return function;
+
+            for (String alias : function.aliases()) {
+                if (alias.equals(name)) return function;
+            }
         }
         return null;
     }
@@ -71,6 +88,10 @@ public interface Function<ArgumentType> {
     static @Nullable Function<?> ofNamespacedOrName(@NonNull String name) {
         for (Function<?> function : FUNCTIONS) {
             if (function.namespaced().equals(name)) return function;
+
+            for (String alias : function.namespacedAliases()) {
+                if (alias.equals(name)) return function;
+            }
         }
         return ofName(name);
     }

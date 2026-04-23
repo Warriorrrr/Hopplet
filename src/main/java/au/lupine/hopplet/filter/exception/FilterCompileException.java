@@ -10,13 +10,13 @@ public final class FilterCompileException extends RuntimeException implements Co
 
     private final @NonNull Component component;
 
-    public FilterCompileException(@NonNull String message) {
-        this.component = Component.text(message, NamedTextColor.RED);
-    }
-
     public FilterCompileException(@NonNull Component component) {
         super(PlainTextComponentSerializer.plainText().serialize(component));
-        this.component = component;
+        this.component = component.colorIfAbsent(NamedTextColor.RED);
+    }
+
+    public FilterCompileException(@NonNull String message) {
+        this(Component.text(message, NamedTextColor.RED));
     }
 
     @Override

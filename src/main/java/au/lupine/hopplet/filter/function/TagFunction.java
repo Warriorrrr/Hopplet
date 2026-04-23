@@ -58,7 +58,7 @@ public final class TagFunction implements Function<Set<Tag<Material>>> {
                 throw new FilterCompileException(
                     Component.translatable(
                         "hopplet.filter.function.tag.compilation.exception.unknown_tag",
-                        Argument.string("argument", argument)
+                        Argument.string("input", argument)
                     )
                 );
             }

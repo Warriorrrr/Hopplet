@@ -3,6 +3,7 @@ package au.lupine.hopplet.filter;
 import au.lupine.hopplet.filter.exception.FilterCompileException;
 import au.lupine.hopplet.util.BlockKey;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.translation.Argument;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -14,25 +15,21 @@ import org.bukkit.inventory.ItemStack;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public final class Filter {
 
-    /// Static {@link Filter} instance that always accepts any item.
-    public static final @NonNull Filter TRUE = new Filter(new Node.Constant(true));
+    private final @NonNull Node root;
 
-    private final @NonNull Node node;
-
-    private Filter(@NonNull Node node) {
-        this.node = node;
+    private Filter(@NonNull Node root) {
+        this.root = root;
     }
 
     /// @return `true` if the filter accepts the item in the specified {@link Context}.
     public boolean test(@NonNull Context context) {
-        return node.evaluate(context);
+        return root.evaluate(context);
     }
 
     public static final class Compiler {
@@ -41,12 +38,12 @@ public final class Filter {
         /// @return A compiled Filter, or `null` if the specified string is null, empty, or contains only whitespace.
         /// @throws FilterCompileException Thrown if the specified string is non-empty but has a compilation error.
         public static @Nullable Filter compile(@Nullable String raw) throws FilterCompileException {
-            if (raw == null) return null;
+            if (raw == null || raw.isBlank()) return null;
 
-            String cleaned = clean(raw);
-            if (cleaned.isEmpty()) return null;
+            List<Token> tokens = Tokeniser.tokenise(raw);
+            Node root = new Parser(tokens).parse();
 
-            return new Filter(new Node.Constant(true));
+            return new Filter(root);
         }
 
         public static @Nullable Filter compile(@Nullable Component component) throws FilterCompileException {
@@ -65,9 +62,283 @@ public final class Filter {
             return component == null ? null : PlainTextComponentSerializer.plainText().serialize(component);
         }
 
-        /// Cleans this string by removing leading and trailing whitespace, as well as any line breaks.
-        public static @NonNull String clean(@NonNull String string) {
-            return string.trim().replaceAll("\\R", "");
+        private static final class Tokeniser {
+            private static List<Token> tokenise(@NonNull String input) throws FilterCompileException {
+                List<Token> tokens = new ArrayList<>();
+                int i = 0;
+
+                while (i < input.length()) {
+                    char character = input.charAt(i);
+
+                    if (Character.isWhitespace(character)) {
+                        i++;
+                        continue;
+                    }
+
+                    switch (character) {
+                        case '(' -> { tokens.add(new Token(TokenType.LPAREN, "(", i)); i++; }
+                        case ')' -> { tokens.add(new Token(TokenType.RPAREN, ")", i)); i++; }
+                        case '&' -> { tokens.add(new Token(TokenType.AND, "&", i)); i++; }
+                        case '|' -> { tokens.add(new Token(TokenType.OR, "|", i)); i++; }
+                        case '!' -> { tokens.add(new Token(TokenType.NOT, "!", i)); i++; }
+                        case ',' -> { tokens.add(new Token(TokenType.COMMA, ",", i)); i++; }
+                        case '"' -> {
+                            int start = i;
+                            i++;
+
+                            int stringStart = i;
+                            while (i < input.length() && input.charAt(i) != '"') i++;
+
+                            if (i >= input.length()) {
+                                throw new FilterCompileException(
+                                    Component.translatable(
+                                        "hopplet.filter.compilation.exception.unterminated_string",
+                                        Argument.numeric("position", start + 1)
+                                    )
+                                );
+                            }
+
+                            String string = input.substring(stringStart, i);
+                            tokens.add(new Token(TokenType.STRING, string, start));
+                            i++;
+                        }
+                        default -> {
+                            int start = i;
+                            while (i < input.length() && !TokenType.delimiter(input.charAt(i))) i++;
+
+                            String ident = input.substring(start, i);
+                            tokens.add(new Token(TokenType.IDENT, ident, start));
+                        }
+                    }
+                }
+
+                tokens.add(new Token(TokenType.EOF, "", input.length()));
+                return tokens;
+            }
+        }
+
+        private static final class Parser {
+
+            private final @NonNull List<Token> tokens;
+            private int position = 0;
+
+            public Parser(@NonNull List<Token> tokens) {
+                this.tokens = tokens;
+            }
+
+            private @NonNull Token peek() {
+                return tokens.get(position);
+            }
+
+            private @NonNull Token advance() {
+                return tokens.get(position++);
+            }
+
+            private @NonNull Token expect(@NonNull TokenType type) throws FilterCompileException {
+                Token token = peek();
+
+                if (token.type != type) throw new FilterCompileException(
+                    Component.translatable(
+                        "hopplet.filter.compilation.exception.expected_token",
+                        Argument.string("expected", type.display()), // TODO: improve token formatting
+                        Argument.string("got", token.type.display()),
+                        Argument.numeric("position", token.position + 1)
+                    )
+                );
+
+                return advance();
+            }
+
+            public @NonNull Node parse() throws FilterCompileException {
+                Node node = or();
+                expect(TokenType.EOF);
+                return node;
+            }
+
+            private @NonNull Node call() throws FilterCompileException {
+                Token name = expect(TokenType.IDENT);
+                expect(TokenType.LPAREN);
+
+                List<String> arguments = new ArrayList<>();
+                if (peek().type != TokenType.RPAREN) {
+                    arguments.add(argument());
+
+                    while (peek().type == TokenType.COMMA) {
+                        advance();
+                        arguments.add(argument());
+                    }
+                }
+
+                expect(TokenType.RPAREN);
+
+                String functionName = name.text;
+                Function<?> function = Function.ofNamespacedOrName(functionName);
+                if (function == null) throw new FilterCompileException(
+                    Component.translatable(
+                        "hopplet.filter.compilation.exception.unknown_function",
+                        Argument.string("name", functionName),
+                        Argument.numeric("position", name.position + 1)
+                    )
+                );
+
+                return Node.Call.of(function, arguments);
+            }
+
+            private @NonNull String argument() throws FilterCompileException {
+                Token token = peek();
+
+                if (token.type == TokenType.IDENT || token.type == TokenType.STRING) {
+                    advance();
+                    return token.text;
+                }
+
+                throw new FilterCompileException(
+                    Component.translatable(
+                        "hopplet.filter.compilation.exception.expected_argument",
+                        Argument.string("got", token.type.display()),
+                        Argument.numeric("position", token.position + 1)
+                    )
+                );
+            }
+
+            private @NonNull Node and() throws FilterCompileException {
+                Node left = not();
+
+                while(peek().type == TokenType.AND) {
+                    advance();
+                    Node right = not();
+                    left = new Node.And(left, right);
+                }
+
+                return left;
+            }
+
+            private @NonNull Node or() throws FilterCompileException {
+                Node left = and();
+
+                while(peek().type == TokenType.OR) {
+                    advance();
+                    Node right = and();
+                    left = new Node.Or(left, right);
+                }
+
+                return left;
+            }
+
+            private @NonNull Node not() throws FilterCompileException {
+                if (peek().type == TokenType.NOT) {
+                    advance();
+                    return new Node.Not(not());
+                }
+
+                return primary();
+            }
+
+            private @NonNull Node primary() throws FilterCompileException {
+                Token token = peek();
+
+                if (token.type == TokenType.LPAREN) {
+                    advance();
+
+                    Node inner = or();
+                    expect(TokenType.RPAREN);
+
+                    return inner;
+                }
+
+                if (token.type == TokenType.IDENT) return call();
+
+                throw new FilterCompileException(
+                    Component.translatable(
+                        "hopplet.filter.compilation.exception.unexpected_token",
+                        Argument.string("token", token.type.display()),
+                        Argument.numeric("position", token.position + 1)
+                    )
+                );
+            }
+        }
+
+        private enum TokenType {
+            IDENT(null),
+            STRING(null),
+            LPAREN('('),
+            RPAREN(')'),
+            AND('&'),
+            OR('|'),
+            NOT('!'),
+            COMMA(','),
+            EOF(null);
+
+            private static final Set<Character> DELIMITERS = Arrays.stream(values())
+                .map(type -> type.character)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toUnmodifiableSet());
+
+            private final @Nullable Character character;
+
+            TokenType(@Nullable Character character) {
+                this.character = character;
+            }
+
+            public static boolean delimiter(char character) {
+                return Character.isWhitespace(character) || DELIMITERS.contains(character);
+            }
+
+            public @NonNull String display() {
+                return switch (this) {
+                    case IDENT -> "identifier";
+                    case STRING -> "string";
+                    case LPAREN -> "(";
+                    case RPAREN -> ")";
+                    case AND -> "&";
+                    case OR -> "|";
+                    case NOT -> "!";
+                    case COMMA -> ",";
+                    case EOF -> "end of filter";
+                };
+            }
+        }
+
+        private record Token(@NonNull TokenType type, @NonNull String text, int position) {}
+    }
+
+    private sealed interface Node {
+
+        boolean evaluate(@NonNull Context context);
+
+        record Call<ArgumentType>(@NonNull Function<ArgumentType> function, @NonNull ArgumentType argument) implements Node {
+            @Override public boolean evaluate(@NonNull Context context) {
+                return function.test(context, argument);
+            }
+
+            static <ArgumentType> @NonNull Call<ArgumentType> of(@NonNull Function<ArgumentType> function, @NonNull List<String> arguments) throws FilterCompileException {
+                ArgumentType compiled = function.compile(arguments);
+                return new Call<>(function, compiled);
+            }
+        }
+
+        record And(@NonNull Node left, @NonNull Node right) implements Node {
+            @Override public boolean evaluate(@NonNull Context context) {
+                return left.evaluate(context) && right.evaluate(context);
+            }
+        }
+
+        record Or(@NonNull Node left, @NonNull Node right) implements Node {
+            @Override public boolean evaluate(@NonNull Context context) {
+                return left.evaluate(context) || right.evaluate(context);
+            }
+        }
+
+        record Not(@NonNull Node inner) implements Node {
+            @Override public boolean evaluate(@NonNull Context context) {
+                return !inner.evaluate(context);
+            }
+        }
+
+        record Constant(boolean value) implements Node {
+            @Override public boolean evaluate(@NonNull Context context) {
+                return value;
+            }
         }
     }
 
@@ -235,46 +506,6 @@ public final class Filter {
             public @NonNull Builder destination(@NonNull Inventory destination) {
                 this.destination = destination;
                 return this;
-            }
-        }
-    }
-
-    private sealed interface Node {
-
-        boolean evaluate(@NonNull Context context);
-
-        record Call<ArgumentType>(@NonNull Function<ArgumentType> function, @NonNull ArgumentType argument) implements Node {
-            @Override public boolean evaluate(@NonNull Context context) {
-                return function.test(context, argument);
-            }
-
-            static <ArgumentType> @NonNull Call<ArgumentType> of(@NonNull Function<ArgumentType> function, @NonNull List<String> arguments) throws FilterCompileException {
-                ArgumentType compiled = function.compile(arguments);
-                return new Call<>(function, compiled);
-            }
-        }
-
-        record And(@NonNull Node left, @NonNull Node right) implements Node {
-            @Override public boolean evaluate(@NonNull Context context) {
-                return left.evaluate(context) && right.evaluate(context);
-            }
-        }
-
-        record Or(@NonNull Node left, @NonNull Node right) implements Node {
-            @Override public boolean evaluate(@NonNull Context context) {
-                return left.evaluate(context) || right.evaluate(context);
-            }
-        }
-
-        record Not(@NonNull Node inner) implements Node {
-            @Override public boolean evaluate(@NonNull Context context) {
-                return !inner.evaluate(context);
-            }
-        }
-
-        record Constant(boolean value) implements Node {
-            @Override public boolean evaluate(@NonNull Context context) {
-                return value;
             }
         }
     }

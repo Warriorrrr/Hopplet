@@ -58,7 +58,7 @@ public final class MaterialFunction implements Function<Set<Material>> {
                 throw new FilterCompileException(
                     Component.translatable(
                         "hopplet.filter.function.material.compilation.exception.unknown_material",
-                        Argument.string("argument", argument)
+                        Argument.string("input", argument)
                     )
                 );
             }

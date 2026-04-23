@@ -72,17 +72,20 @@ public final class FilterEditListener implements Listener {
                 Block target = location.getBlock();
                 if (!(target.getState(false) instanceof Hopper hopper)) return;
 
-                String cleaned = Filter.Compiler.clean(input);
-
                 Filter.Cache.invalidate(hopper);
-                try {
-                    Filter filter = Filter.Compiler.compile(cleaned);
-                    if (filter != null) Filter.Cache.cache(hopper, filter);
-                } catch (FilterCompileException e) {
-                    player.sendMessage(e);
-                }
 
-                hopper.customName(cleaned.isEmpty() ? null : Component.text(cleaned));
+                if (input.isBlank()) {
+                    hopper.customName(null);
+                } else {
+                    hopper.customName(Component.text(input));
+
+                    try {
+                        Filter filter = Filter.Compiler.compile(input);
+                        if (filter != null) Filter.Cache.cache(hopper, filter);
+                    } catch (FilterCompileException e) {
+                        player.sendMessage(e);
+                    }
+                }
 
                 hopper.setTransferCooldown(20);
                 hopper.update();
@@ -121,17 +124,20 @@ public final class FilterEditListener implements Listener {
             instance.getServer().getRegionScheduler().run(instance, location, task -> {
                 if (!hopper.isValid()) return;
 
-                String cleaned = Filter.Compiler.clean(input);
-
                 Filter.Cache.invalidate(hopper);
-                try {
-                    Filter filter = Filter.Compiler.compile(cleaned);
-                    if (filter != null) Filter.Cache.cache(hopper, filter);
-                } catch (FilterCompileException e) {
-                    player.sendMessage(e);
+                if (input.isBlank()) {
+                    hopper.customName(null);
+                } else {
+                    hopper.customName(Component.text(input));
+
+                    try {
+                        Filter filter = Filter.Compiler.compile(input);
+                        if (filter != null) Filter.Cache.cache(hopper, filter);
+                    } catch (FilterCompileException e) {
+                        player.sendMessage(e);
+                    }
                 }
 
-                hopper.customName(cleaned.isEmpty() ? null : Component.text(cleaned));
                 playSound(location, Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 0.75F, 1.25F, 1.5F);
             });
         };
@@ -163,7 +169,7 @@ public final class FilterEditListener implements Listener {
         bodies.add(DialogBody.plainMessage(translate(player, "hopplet.dialog.edit_filter.body.documentation")));
         bodies.add(DialogBody.plainMessage(translate(player, "hopplet.dialog.edit_filter.body.discord")));
 
-        if (message != null) bodies.add(DialogBody.plainMessage(message));
+        if (message != null) bodies.add(DialogBody.plainMessage(translate(player, message)));
 
         return Dialog.create(builder -> builder.empty()
             .base(DialogBase.builder(translate(player, "hopplet.dialog.edit_filter.title"))
@@ -226,6 +232,10 @@ public final class FilterEditListener implements Listener {
     // https://github.com/PaperMC/Paper/issues/12971
     private @NonNull Component translate(@NonNull Player player, @NonNull String key) {
         return GlobalTranslator.render(Component.translatable(key), player.locale());
+    }
+
+    private @NonNull Component translate(@NonNull Player player, @NonNull Component component) {
+        return GlobalTranslator.render(component, player.locale());
     }
 
     private void playSound(@NonNull Location location, @NonNull Sound sound, float volume, float origin, float bound) {

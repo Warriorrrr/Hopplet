@@ -80,16 +80,6 @@ public final class FilterCacheListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void on(@NonNull BlockPistonExtendEvent event) {
-        invalidate(event.getBlocks());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void on(@NonNull BlockPistonRetractEvent event) {
-        invalidate(event.getBlocks());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void on(@NonNull WorldUnloadEvent event) {
         UUID uuid = event.getWorld().getUID();
         Filter.Cache.BLOCK_CACHE.keySet().removeIf(key -> key.world().equals(uuid));

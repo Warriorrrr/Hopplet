@@ -75,7 +75,7 @@ public final class EnchantmentFunction implements Function<Set<EnchantmentFuncti
                     throw new FilterCompileException(
                         Component.translatable(
                             "hopplet.filter.function.enchantment.compilation.exception.level_must_be_positive",
-                            Argument.string("argument", argument)
+                            Argument.string("input", argument)
                         )
                     );
                 }
@@ -96,7 +96,7 @@ public final class EnchantmentFunction implements Function<Set<EnchantmentFuncti
             throw new FilterCompileException(
                 Component.translatable(
                     "hopplet.filter.function.enchantment.compilation.exception.no_enchantment_specified",
-                    Argument.string("argument", argument)
+                    Argument.string("input", argument)
                 )
             );
         }
@@ -109,7 +109,7 @@ public final class EnchantmentFunction implements Function<Set<EnchantmentFuncti
             throw new FilterCompileException(
                 Component.translatable(
                     "hopplet.filter.function.enchantment.compilation.exception.unknown_enchantment",
-                    Argument.string("argument", argument)
+                    Argument.string("input", argument)
                 )
             );
         }
@@ -122,7 +122,7 @@ public final class EnchantmentFunction implements Function<Set<EnchantmentFuncti
             throw new FilterCompileException(
                 Component.translatable(
                     "hopplet.filter.function.enchantment.compilation.exception.no_level_specified",
-                    Argument.string("argument", argument)
+                    Argument.string("input", argument)
                 )
             );
         }
@@ -133,7 +133,7 @@ public final class EnchantmentFunction implements Function<Set<EnchantmentFuncti
             throw new FilterCompileException(
                 Component.translatable(
                     "hopplet.filter.function.enchantment.compilation.exception.invalid_level",
-                    Argument.string("argument", argument)
+                    Argument.string("input", argument)
                 )
             );
         }
