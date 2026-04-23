@@ -30,19 +30,13 @@ public final class FilterCacheListener implements Listener {
 
     private void invalidate(final World world, Collection<Block> blocks) {
         final Map<Long, AbstractInt2ObjectMap<Filter>> worldChunkCache = Filter.Cache.BLOCK_CACHE.get(world.getUID());
-        if (worldChunkCache == null) {
-            return;
-        }
+        if (worldChunkCache == null) return;
 
         for (final Block block : blocks) {
-            if (block.getType() != Material.HOPPER) {
-                continue;
-            }
+            if (block.getType() != Material.HOPPER) continue;
 
             final AbstractInt2ObjectMap<Filter> chunkCache = worldChunkCache.get(Chunk.getChunkKey(block.getX() >> 4, block.getZ() >> 4));
-            if (chunkCache == null) {
-                continue;
-            }
+            if (chunkCache == null) continue;
 
             chunkCache.remove(Filter.Cache.packChunkRelativeCoords(block.getX(), block.getY(), block.getZ()));
         }
@@ -108,9 +102,10 @@ public final class FilterCacheListener implements Listener {
     @EventHandler
     public void cleanupBlockFilterCache(final ChunkUnloadEvent event) {
         final Map<Long, ?> worldChunkCache = Filter.Cache.BLOCK_CACHE.get(event.getWorld().getUID());
-        if (worldChunkCache != null) {
-            final Chunk chunk = event.getChunk();
-            worldChunkCache.remove(Chunk.getChunkKey(chunk.getX(), chunk.getZ()));
-        }
+
+        if (worldChunkCache == null) return;
+
+        final Chunk chunk = event.getChunk();
+        worldChunkCache.remove(Chunk.getChunkKey(chunk.getX(), chunk.getZ()));
     }
 }

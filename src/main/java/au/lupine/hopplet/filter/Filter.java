@@ -366,27 +366,21 @@ public final class Filter {
 
         private static @Nullable AbstractInt2ObjectMap<Filter> getChunkFilterMap(final UUID worldUUID, final int x, final int z) {
             final Map<Long, AbstractInt2ObjectMap<Filter>> chunkMap = BLOCK_CACHE.get(worldUUID);
-            if (chunkMap == null) {
-                return null;
-            }
+            if (chunkMap == null) return null;
 
             return chunkMap.get(Chunk.getChunkKey(x >> 4, z >> 4));
         }
 
         public static @Nullable Filter get(final UUID worldUUID, final int x, final int y, final int z) {
             final AbstractInt2ObjectMap<Filter> filterMap = getChunkFilterMap(worldUUID, x, z);
-            if (filterMap == null) {
-                return null;
-            }
+            if (filterMap == null) return null;
 
             return filterMap.get(packChunkRelativeCoords(x, y, z));
         }
 
         public static void invalidate(final UUID worldUUID, final int x, final int y, final int z){
             final AbstractInt2ObjectMap<Filter> filterMap = getChunkFilterMap(worldUUID, x, z);
-            if (filterMap != null) {
-                filterMap.remove(packChunkRelativeCoords(x, y, z));
-            }
+            if (filterMap != null) filterMap.remove(packChunkRelativeCoords(x, y, z));
         }
 
         // Location methods
@@ -433,14 +427,10 @@ public final class Filter {
             final int packed = packChunkRelativeCoords(hopper.getX(), hopper.getY(), hopper.getZ());
 
             Filter filter = map.get(packed);
-            if (filter != null) {
-                return filter;
-            }
+            if (filter != null) return filter;
 
             Filter compiled = Filter.Compiler.compile(hopper);
-            if (compiled != null) {
-                map.put(packed, compiled);
-            }
+            if (compiled != null) map.put(packed, compiled);
 
             return compiled;
         }
@@ -477,6 +467,7 @@ public final class Filter {
 
             Filter compiled = Filter.Compiler.compile(hopper);
             if (compiled != null) cache(hopper, compiled);
+
             return compiled;
         }
 
