@@ -41,6 +41,7 @@ public final class Hopplet extends JavaPlugin {
             new DisplayNameFunction(),
             new DisplayNameStartsWithFunction(),
             new EnchantmentFunction(),
+            new IsEnchantedFunction(),
             new MaterialContainsFunction(),
             new MaterialEndsWithFunction(),
             new MaterialFunction(),
