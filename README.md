@@ -25,5 +25,9 @@ Exact display name filtering: only allow items with exactly the specified name t
 name("Super Secret Access Key")
 ```
 
+## Interface
+Hopplet features a unique dialog interface to make editing and compiling filters as simple as possible.
+![Hopplet dialog](https://cdn.modrinth.com/data/zLmQcDSt/images/72fcb163ff5930fe6680bc873cb9b76422c28ecc.png)
+
 ## Credits
 Thanks to LiveOverflow for the inspiration for this plugin in [this](https://youtu.be/Gi2PPBCEHuM?t=224) video.
