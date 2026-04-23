@@ -15,7 +15,7 @@ public interface Function<ArgumentType> {
 
     @NonNull Set<Function<?>> FUNCTIONS = new CopyOnWriteArraySet<>();
 
-    NoArguments NO_ARGUMENTS = new NoArguments();
+    @NonNull NoArguments NO_ARGUMENTS = new NoArguments();
 
     /// @return The name of this function in `snake_case`.
     @NonNull String name();
