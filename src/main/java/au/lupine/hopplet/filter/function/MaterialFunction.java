@@ -73,10 +73,6 @@ public final class MaterialFunction implements Function<Set<Material>> {
     public boolean test(Filter.@NonNull Context context, @NonNull Set<Material> materials) {
         Material type = context.stack().getType();
 
-        for (Material material : materials) {
-            if (material.equals(type)) return true;
-        }
-
-        return false;
+        return materials.contains(type);
     }
 }

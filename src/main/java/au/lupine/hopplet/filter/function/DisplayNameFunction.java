@@ -55,10 +55,6 @@ public final class DisplayNameFunction implements Function<Set<String>> {
         String name = PlainTextComponentSerializer.plainText().serialize(context.stack().displayName());
         name = name.substring(1, name.length() - 1);
 
-        for (String argument : arguments) {
-            if (name.equals(argument)) return true;
-        }
-
-        return false;
+        return arguments.contains(name);
     }
 }
