@@ -22,11 +22,9 @@ import java.util.stream.Collectors;
 public final class Filter {
 
     private final @NonNull Node root;
-    private final @NonNull String raw;
 
-    private Filter(@NonNull Node root, @NonNull String raw) {
+    private Filter(@NonNull Node root) {
         this.root = root;
-        this.raw = raw;
     }
 
     /// @return `true` if the filter accepts the item in the specified {@link Context}.
@@ -45,7 +43,7 @@ public final class Filter {
             List<Token> tokens = Tokeniser.tokenise(raw);
             Node root = new Parser(tokens).parse();
 
-            return new Filter(root, raw);
+            return new Filter(root);
         }
 
         public static @Nullable Filter compile(@Nullable Component component) throws FilterCompileException {
@@ -520,10 +518,5 @@ public final class Filter {
                 return this;
             }
         }
-    }
-
-    @Override
-    public @NonNull String toString() {
-        return raw;
     }
 }
