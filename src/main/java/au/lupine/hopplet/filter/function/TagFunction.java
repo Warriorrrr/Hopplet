@@ -57,7 +57,7 @@ public final class TagFunction implements Function<Set<Tag<Material>>> {
             if (key == null) {
                 throw new FilterCompileException(
                     Component.translatable(
-                        "hopplet.filter.function.tag.compilation.exception.unknown_tag",
+                        "hopplet.filter.function.default.compilation.exception.invalid_key",
                         Argument.string("input", argument)
                     )
                 );
@@ -65,6 +65,15 @@ public final class TagFunction implements Function<Set<Tag<Material>>> {
 
             Tag<Material> tag = Bukkit.getTag(Tag.REGISTRY_ITEMS, key, Material.class);
             if (tag == null) tag = Bukkit.getTag(Tag.REGISTRY_BLOCKS, key, Material.class);
+
+            if (tag == null) {
+                throw new FilterCompileException(
+                    Component.translatable(
+                        "hopplet.filter.function.tag.compilation.exception.unknown_tag",
+                        Argument.string("input", argument)
+                    )
+                );
+            }
 
             tags.add(tag);
         }
