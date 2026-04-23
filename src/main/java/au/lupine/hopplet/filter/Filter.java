@@ -364,7 +364,7 @@ public final class Filter {
                     .put(packChunkRelativeCoords(x, y, z), filter);
         }
 
-        private static @Nullable AbstractInt2ObjectMap<Filter> getChunkFilterMap(final UUID worldUUID, final int x, final int y, final int z) {
+        private static @Nullable AbstractInt2ObjectMap<Filter> getChunkFilterMap(final UUID worldUUID, final int x, final int z) {
             final Map<Long, AbstractInt2ObjectMap<Filter>> chunkMap = BLOCK_CACHE.get(worldUUID);
             if (chunkMap == null) {
                 return null;
@@ -374,7 +374,7 @@ public final class Filter {
         }
 
         public static @Nullable Filter get(final UUID worldUUID, final int x, final int y, final int z) {
-            final AbstractInt2ObjectMap<Filter> filterMap = getChunkFilterMap(worldUUID, x, y, z);
+            final AbstractInt2ObjectMap<Filter> filterMap = getChunkFilterMap(worldUUID, x, z);
             if (filterMap == null) {
                 return null;
             }
@@ -383,7 +383,7 @@ public final class Filter {
         }
 
         public static void invalidate(final UUID worldUUID, final int x, final int y, final int z){
-            final AbstractInt2ObjectMap<Filter> filterMap = getChunkFilterMap(worldUUID, x, y, z);
+            final AbstractInt2ObjectMap<Filter> filterMap = getChunkFilterMap(worldUUID, x, z);
             if (filterMap != null) {
                 filterMap.remove(packChunkRelativeCoords(x, y, z));
             }
