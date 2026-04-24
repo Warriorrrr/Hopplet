@@ -174,12 +174,20 @@ public final class Filter {
 
                 expect(TokenType.RPAREN);
 
-                String functionName = name.text;
-                Function<?> function = Function.ofNamespacedOrName(functionName);
+                String identifier = name.text;
+                Function<?> function = Function.of(identifier);
                 if (function == null) throw new FilterCompileException(
                     Component.translatable(
                         "hopplet.filter.compilation.exception.unknown_function",
-                        Argument.string("name", functionName),
+                        Argument.string("name", identifier),
+                        Argument.numeric("position", name.position + 1)
+                    )
+                );
+
+                if (!function.enabled()) throw new FilterCompileException(
+                    Component.translatable(
+                        "hopplet.filter.compilation.exception.function_disabled",
+                        Argument.string("name", identifier),
                         Argument.numeric("position", name.position + 1)
                     )
                 );

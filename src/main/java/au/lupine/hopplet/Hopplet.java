@@ -2,7 +2,6 @@ package au.lupine.hopplet;
 
 import au.lupine.hopplet.base.Plugin;
 import au.lupine.hopplet.command.HoppletCommand;
-import au.lupine.hopplet.event.HoppletEnabledEvent;
 import au.lupine.hopplet.filter.Filter;
 import au.lupine.hopplet.filter.Function;
 import au.lupine.hopplet.filter.function.*;
@@ -42,15 +41,11 @@ public final class Hopplet extends Plugin {
             new MaterialStartsWithFunction(), new PotionDurationFunction(), new PotionEffectFunction(), new TagFunction(),
             new ThrowerFunction()
         );
-
-        HoppletEnabledEvent event = new HoppletEnabledEvent();
-        event.callEvent();
     }
 
     @Override
     public void disable() {
         Filter.Cache.invalidate();
-        Function.FUNCTIONS.clear();
     }
 
     @Override
