@@ -26,6 +26,10 @@ permissions:
     description: Grants access to the Hopplet command.
     default: true
 
+  hopplet.command.hopplet.edit:
+    description: Grants access to the Hopplet edit command.
+    default: true
+
   hopplet.command.hopplet.function:
     description: Grants access to view Hopplet function info.
     default: true
