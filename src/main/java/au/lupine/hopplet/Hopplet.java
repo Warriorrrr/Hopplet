@@ -61,7 +61,7 @@ public final class Hopplet extends Plugin {
                     )
                 ),
                 "function", Map.of(
-                    "disabled", List.of()
+                    "disable", List.of()
                 )
             )
         );
