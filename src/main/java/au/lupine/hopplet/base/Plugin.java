@@ -53,8 +53,6 @@ public abstract class Plugin extends JavaPlugin {
 
         tasks.forEach(ScheduledTask::cancel);
         tasks.clear();
-
-        config.save();
     }
 
     public void disable() {}
@@ -129,21 +127,26 @@ public abstract class Plugin extends JavaPlugin {
 
             try {
                 root = Files.exists(file) ? loader.load() : loader.createNode();
-
-                owner.nodes().forEach((key, value) -> {
-                    if (!root.node(key).virtual()) return;
-
-                    try {
-                        root.node(key).set(value);
-                    } catch (SerializationException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                defaults(root, owner.nodes());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
             save();
+        }
+
+        @SuppressWarnings("unchecked")
+        private static void defaults(@NonNull ConfigurationNode node, Map<String, Object> defaults) throws SerializationException {
+            for (Map.Entry<String, Object> entry : defaults.entrySet()) {
+                ConfigurationNode child = node.node(entry.getKey());
+                Object value = entry.getValue();
+
+                if (value instanceof Map<?, ?> nested) {
+                    defaults(child, (Map<String, Object>) nested);
+                } else if (child.virtual()) {
+                    child.set(value);
+                }
+            }
         }
 
         public @NonNull Plugin owner() {

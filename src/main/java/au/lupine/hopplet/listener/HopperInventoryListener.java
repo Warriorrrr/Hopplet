@@ -1,5 +1,6 @@
 package au.lupine.hopplet.listener;
 
+import au.lupine.hopplet.Hopplet;
 import au.lupine.hopplet.filter.Filter;
 import au.lupine.hopplet.filter.exception.FilterCompileException;
 import au.lupine.hopplet.util.HopperRouting;
@@ -33,6 +34,7 @@ public final class HopperInventoryListener implements Listener {
                 default -> null;
             };
         } catch (FilterCompileException e) {
+            if (Hopplet.instance().config().root().node("filter", "disable_hopper_on_compilation_error").getBoolean(false)) event.setCancelled(true);
             return;
         }
 
@@ -83,6 +85,7 @@ public final class HopperInventoryListener implements Listener {
                 default -> null;
             };
         } catch (FilterCompileException e) {
+            if (Hopplet.instance().config().root().node("filter", "disable_hopper_on_compilation_error").getBoolean(false)) event.setCancelled(true);
             return;
         }
 

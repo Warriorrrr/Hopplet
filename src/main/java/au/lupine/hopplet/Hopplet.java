@@ -55,9 +55,10 @@ public final class Hopplet extends Plugin {
     public @NonNull Map<String, Object> nodes() {
         return Map.of(
             "filter", Map.of(
+                "disable_hopper_on_compilation_error", false,
                 "edit", Map.of(
                     "dialog", Map.of(
-                        "input_length", 512
+                        "max_input_length", 512
                     )
                 ),
                 "function", Map.of(
