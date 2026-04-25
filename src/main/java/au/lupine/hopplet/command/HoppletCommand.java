@@ -11,8 +11,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 import org.bukkit.block.Block;
 import org.bukkit.block.Hopper;
@@ -24,7 +23,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.jspecify.annotations.NonNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class HoppletCommand {
 
@@ -113,18 +111,21 @@ public final class HoppletCommand {
                             return 0;
                         }
 
-                        String capitalised = Arrays.stream(function.name().split("_"))
-                                .map(word -> word.isEmpty() ? word
-                                    : Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase())
-                                    .collect(Collectors.joining(" "));
-
                         sender.sendMessage(Component.translatable(
                             "hopplet.command.hopplet.function.feedback.function_info",
-                            Argument.component("name", Component.text(
-                                capitalised,
-                                NamedTextColor.GOLD,
-                                TextDecoration.BOLD
-                            )),
+                            Argument.string("name", function.name() + "()"),
+                            Argument.component(
+                                "aliases",
+                                function.aliases().isEmpty() ? Component.translatable("hopplet.command.hopplet.function.feedback.function_info.no_aliases") :
+                                    Component.join(
+                                        JoinConfiguration.commas(true),
+                                        function.aliases().stream()
+                                        .sorted(String.CASE_INSENSITIVE_ORDER)
+                                        .map(string -> string + "()")
+                                        .map(Component::text)
+                                        .toList()
+                                )
+                            ),
                             Argument.component("description", function.description())
                         ));
 
