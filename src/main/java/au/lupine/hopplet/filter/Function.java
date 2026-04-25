@@ -31,7 +31,7 @@ public interface Function<ArgumentType> {
         return Component.translatable("hopplet.filter.function.default.description");
     }
 
-    /// Functions will be {@link #key()} as `plugin:function_name`.
+    /// Functions will be {@link #key() keyed} as `plugin:function_name`.
     /// This namespace can be used if another function has claimed your {@link #name()}.
     /// @return The plugin that owns this function.
     @NonNull Plugin plugin();
