@@ -9,6 +9,7 @@ import au.lupine.hopplet.listener.FilterCacheListener;
 import au.lupine.hopplet.listener.FilterEditListener;
 import au.lupine.hopplet.listener.HopperInventoryListener;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -36,6 +37,12 @@ public final class Hopplet extends Plugin {
                 new HopperInventoryListener()
             );
         }
+
+        Filter.style = MiniMessage.miniMessage().deserialize(
+            config().root()
+                .node("filter", "magic_style")
+                .getString("<gold>")
+        ).style();
 
         listeners(
             new FilterEditListener()
@@ -69,7 +76,8 @@ public final class Hopplet extends Plugin {
                 ),
                 "function", Map.of(
                     "disable", List.of()
-                )
+                ),
+                "magic_style", "<gold>"
             )
         );
     }

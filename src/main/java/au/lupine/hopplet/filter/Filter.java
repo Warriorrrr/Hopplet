@@ -1,9 +1,14 @@
 package au.lupine.hopplet.filter;
 
+import au.lupine.hopplet.base.EditTarget;
 import au.lupine.hopplet.filter.exception.FilterCompileException;
+import au.lupine.hopplet.util.edit.HopperEditTarget;
+import au.lupine.hopplet.util.edit.HopperMinecartEditTarget;
 import it.unimi.dsi.fastutil.ints.AbstractInt2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Chunk;
@@ -24,10 +29,15 @@ import java.util.stream.Collectors;
 
 public final class Filter {
 
-    private final @NonNull Node root;
+    /// This style must be present for a filter to be valid.
+    public static Style style = Style.style(NamedTextColor.GOLD);
 
-    private Filter(@NonNull Node root) {
+    private final @NonNull Node root;
+    private final @NonNull String raw;
+
+    private Filter(@NonNull Node root, @NonNull String raw) {
         this.root = root;
+        this.raw = raw;
     }
 
     /// @return `true` if the filter accepts the item in the specified {@link Context}.
@@ -35,22 +45,45 @@ public final class Filter {
         return root.evaluate(context);
     }
 
+    public @NonNull String raw() {
+        return raw;
+    }
+
+    public static void edit(@NonNull EditTarget target, @NonNull Filter filter) {
+        target.edit(filter);
+    }
+
+    public static void edit(@NonNull Hopper hopper, @NonNull Filter filter) {
+        edit(new HopperEditTarget(hopper), filter);
+    }
+
+    public static void edit(@NonNull HopperMinecart hopper, @NonNull Filter filter) {
+        edit(new HopperMinecartEditTarget(hopper), filter);
+    }
+
     public static final class Compiler {
 
         /// Compiles a raw string into a {@link Filter}.
         /// @return A compiled Filter, or `null` if the specified string is null, empty, or contains only whitespace.
         /// @throws FilterCompileException Thrown if the specified string is non-empty but has a compilation error.
-        public static @Nullable Filter compile(@Nullable String raw) throws FilterCompileException {
-            if (raw == null || raw.isBlank()) return null;
+        public static @Nullable Filter compile(@NonNull String raw) throws FilterCompileException {
+            if (raw.isBlank()) return null;
 
             List<Token> tokens = Tokeniser.tokenise(raw);
             Node root = new Parser(tokens).parse();
 
-            return new Filter(root);
+            return new Filter(root, raw);
         }
 
+        /// Compiles a component into a {@link Filter}.
+        /// @return A compiled filter, or null if the component is null, does not contain {@link Filter#style}.
+        /// @throws FilterCompileException Thrown if the underlying string has a compilation error.
         public static @Nullable Filter compile(@Nullable Component component) throws FilterCompileException {
-            return compile(serialise(component));
+            if (component == null) return null;
+
+            if (!component.style().equals(style)) return null;
+
+            return compile(PlainTextComponentSerializer.plainText().serialize(component));
         }
 
         public static @Nullable Filter compile(@NonNull Hopper hopper) throws FilterCompileException {
@@ -59,10 +92,6 @@ public final class Filter {
 
         public static @Nullable Filter compile(@NonNull HopperMinecart hopper) throws FilterCompileException {
             return compile(hopper.customName());
-        }
-
-        private static @Nullable String serialise(@Nullable Component component) {
-            return component == null ? null : PlainTextComponentSerializer.plainText().serialize(component);
         }
 
         private static final class Tokeniser {

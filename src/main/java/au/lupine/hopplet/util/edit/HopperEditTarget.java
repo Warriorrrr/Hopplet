@@ -3,31 +3,27 @@ package au.lupine.hopplet.util.edit;
 import au.lupine.hopplet.Hopplet;
 import au.lupine.hopplet.base.EditTarget;
 import au.lupine.hopplet.filter.Filter;
-import au.lupine.hopplet.filter.exception.FilterCompileException;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Hopper;
-import org.bukkit.entity.Player;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public final class HopperEditTarget implements EditTarget {
 
-    private final @NonNull String name;
+    private final @Nullable Component component;
     private final @NonNull Location location;
 
     public HopperEditTarget(@NonNull Hopper hopper) {
-        Component existing = hopper.customName();
-        this.name = existing == null ? "" : PlainTextComponentSerializer.plainText().serialize(existing);
-
+        this.component = hopper.customName();
         this.location = hopper.getLocation();
     }
 
     @Override
-    public @NonNull String name() {
-        return name;
+    public @Nullable Component component() {
+        return component;
     }
 
     @Override
@@ -41,7 +37,7 @@ public final class HopperEditTarget implements EditTarget {
     }
 
     @Override
-    public void edit(@NonNull String input, @NonNull Player player) {
+    public void edit(@NonNull String input, @Nullable Filter filter) {
         Hopplet instance = Hopplet.instance();
 
         instance.getServer().getRegionScheduler().run(instance, location, task -> {
@@ -53,14 +49,8 @@ public final class HopperEditTarget implements EditTarget {
             if (input.isBlank()) {
                 hopper.customName(null);
             } else {
-                hopper.customName(Component.text(input));
-
-                try {
-                    Filter filter = Filter.Compiler.compile(input);
-                    if (filter != null) Filter.Cache.cache(hopper, filter);
-                } catch (FilterCompileException e) {
-                    player.sendMessage(e);
-                }
+                hopper.customName(Component.text(input, Filter.style));
+                if (filter != null) Filter.Cache.cache(hopper, filter);
             }
 
             hopper.setTransferCooldown(20);

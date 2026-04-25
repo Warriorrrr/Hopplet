@@ -38,9 +38,9 @@ public final class EditDialog {
 
     private static void open(@NonNull Player player, @NonNull EditTarget target, @NonNull String text, @Nullable Component message) {
         ItemStack item = new ItemStack(target.icon());
-        if (!text.isBlank()) {
+        if (target.component() != null) {
             ItemMeta meta = item.getItemMeta();
-            meta.customName(Component.text(text));
+            meta.customName(target.component());
             item.setItemMeta(meta);
         }
 
