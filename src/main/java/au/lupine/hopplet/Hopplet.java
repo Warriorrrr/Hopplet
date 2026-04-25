@@ -11,7 +11,6 @@ import au.lupine.hopplet.listener.HopperInventoryListener;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.jspecify.annotations.NonNull;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +29,8 @@ public final class Hopplet extends Plugin {
 
     @Override
     public void enable() {
+        if (!config().root().node("enable").getBoolean(true)) return;
+
         listeners(
             new FilterCacheListener(),
             new FilterEditListener(),
@@ -54,6 +55,7 @@ public final class Hopplet extends Plugin {
     @Override
     public @NonNull Map<String, Object> nodes() {
         return Map.of(
+            "enable", true,
             "filter", Map.of(
                 "disable_hopper_on_compilation_error", false,
                 "edit", Map.of(
