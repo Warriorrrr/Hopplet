@@ -5,7 +5,6 @@ import au.lupine.hopplet.filter.Filter;
 import au.lupine.hopplet.filter.Function;
 import au.lupine.hopplet.filter.exception.FilterCompileException;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.translation.Argument;
 import org.bukkit.plugin.Plugin;
 import org.jspecify.annotations.NonNull;
 

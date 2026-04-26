@@ -22,7 +22,10 @@ import org.bukkit.entity.minecart.HopperMinecart;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.jspecify.annotations.NonNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class HoppletCommand {
 
