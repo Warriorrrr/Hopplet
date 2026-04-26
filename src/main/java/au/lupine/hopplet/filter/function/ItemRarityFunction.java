@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+// This function is broken, it seems a lot or all of rarity is handled client side?
 public final class ItemRarityFunction implements Function<Set<ItemRarity>> {
 
     @Override
