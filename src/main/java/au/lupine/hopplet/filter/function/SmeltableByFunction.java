@@ -16,7 +16,7 @@ import java.util.*;
 
 public final class SmeltableByFunction implements Function<Set<InventoryType>> {
 
-    private static final @NonNull Set<InventoryType> FURNACES = Set.of(
+    private static final @NonNull Set<InventoryType> FURNACE_TYPES = Set.of(
         InventoryType.BLAST_FURNACE,
         InventoryType.FURNACE,
         InventoryType.SMOKER
@@ -53,13 +53,13 @@ public final class SmeltableByFunction implements Function<Set<InventoryType>> {
 
     @Override
     public @NonNull Set<InventoryType> compile(@NonNull List<String> arguments) throws FilterCompileException {
-        if (arguments.isEmpty()) return FURNACES;
+        if (arguments.isEmpty()) return FURNACE_TYPES;
 
         Set<InventoryType> types = new HashSet<>();
         for (String argument : arguments) {
             try {
                 InventoryType type = InventoryType.valueOf(argument.toUpperCase());
-                if (!FURNACES.contains(type)) throw new IllegalArgumentException();
+                if (!FURNACE_TYPES.contains(type)) throw new IllegalArgumentException();
 
                 types.add(type);
             } catch (IllegalArgumentException e) {
