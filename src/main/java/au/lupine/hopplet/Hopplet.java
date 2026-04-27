@@ -70,6 +70,7 @@ public final class Hopplet extends Plugin {
             new MaterialStartsWithFunction(),
             new PotionDurationFunction(),
             new PotionEffectFunction(),
+            new SmeltableByFunction(),
             new SourceTypeFunction(),
             new TagFunction(),
             new ThrowerFunction()
