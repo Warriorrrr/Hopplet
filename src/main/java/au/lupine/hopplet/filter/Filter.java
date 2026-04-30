@@ -552,18 +552,22 @@ public final class Filter {
             return new Builder();
         }
 
+        /// @return The item stack representing the item to be filtered, this is always present.
         public @NonNull ItemStack stack() {
             return stack;
         }
 
+        /// @return The physical item entity, only present if this item wasn't moved from another inventory.
         public @Nullable Item item() {
             return item;
         }
 
+        /// @return The inventory this item came from, only present if this item is from another inventory as opposed to being dropped in the world.
         public @Nullable Inventory source() {
             return source;
         }
 
+        /// @return The inventory that owns this filter context.
         public @NonNull Inventory destination() {
             return destination;
         }
