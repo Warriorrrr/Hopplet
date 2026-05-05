@@ -25,8 +25,6 @@ public final class FilterEditListener implements Listener {
 
         if (!player.isSneaking()) return;
 
-        if (!player.getInventory().getItemInMainHand().isEmpty()) return;
-
         Block block = event.getClickedBlock();
         if (block == null) return;
 
@@ -47,8 +45,6 @@ public final class FilterEditListener implements Listener {
         if (!(event.getRightClicked() instanceof HopperMinecart hopper)) return;
 
         if (!player.isSneaking()) return;
-
-        if (!player.getInventory().getItemInMainHand().isEmpty()) return;
 
         BlockBreakEvent bbe = new BlockBreakEvent(hopper.getLocation().getBlock(), player);
         if (!bbe.callEvent()) return;
