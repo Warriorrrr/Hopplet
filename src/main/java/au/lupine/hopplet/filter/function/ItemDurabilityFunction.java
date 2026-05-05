@@ -26,7 +26,10 @@ public final class ItemDurabilityFunction implements Function<Set<ItemDurability
 
     @Override
     public @NonNull Set<String> aliases() {
-        return Set.of("durability");
+        return Set.of(
+            "durability",
+            "dur"
+        );
     }
 
     @Override

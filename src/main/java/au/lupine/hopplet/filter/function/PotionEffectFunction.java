@@ -34,7 +34,10 @@ public final class PotionEffectFunction implements Function<Set<PotionEffectFunc
 
     @Override
     public @NonNull Set<String> aliases() {
-        return Set.of("effect");
+        return Set.of(
+            "effect",
+            "eff"
+        );
     }
 
     @Override
